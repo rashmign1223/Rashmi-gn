@@ -1,0 +1,32 @@
+go-user-api/
+│
+├── cmd/
+│   └── server/
+│       └── main.go
+│
+├── config/
+│   └── config.go
+│
+├── db/
+│   ├── migrations/
+│   │   └── 001_create_users.sql
+│   ├── queries/
+│   │   └── users.sql
+│   └── sqlc.yaml
+│
+├── internal/
+│   ├── handlers/
+│   │   └── user_handler.go
+│   ├── models/
+│   │   └── user.go
+│   ├── repository/
+│   │   └── user_repo.go
+│   ├── utils/
+│   │   └── age.go
+│   └── middleware/
+│       ├── logger.go
+│       └── request_id.go
+│
+├── go.mod
+├── go.sum
+├── README.md
