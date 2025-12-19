@@ -1,0 +1,110 @@
+User Handlers
+http://internal/handlers/user_handler.go
+package handlers
+
+import (
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/go-playground/validator/v10"
+
+	"go-user-api/internal/models"
+	"go-user-api/internal/repository"
+	"go-user-api/internal/utils"
+)
+
+type UserHandler struct {
+	q        *repository.Queries
+	validate *validator.Validate
+}
+
+func NewUserHandler(q *repository.Queries) *UserHandler {
+	return &UserHandler{
+		q:        q,
+		validate: validator.New(),
+	}
+}
+
+func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
+	var req models.UserRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	user, err := h.q.CreateUser(c.Context(), repository.CreateUserParams{
+		Name: req.Name,
+		Dob:  req.Dob,
+	})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(201).JSON(user)
+}
+
+func (h *UserHandler) GetUser(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+
+	user, err := h.q.GetUserByID(c.Context(), int64(id))
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	return c.JSON(models.UserResponse{
+		ID:   user.ID,
+		Name: user.Name,
+		Dob:  user.Dob.Format("2006-01-02"),
+		Age:  utils.CalculateAge(user.Dob),
+	})
+}
+
+func (h *UserHandler) ListUsers(c *fiber.Ctx) error {
+	users, err := h.q.ListUsers(c.Context())
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	var resp []models.UserResponse
+	for _, u := range users {
+		resp = append(resp, models.UserResponse{
+			ID:   u.ID,
+			Name: u.Name,
+			Dob:  u.Dob.Format("2006-01-02"),
+			Age:  utils.CalculateAge(u.Dob),
+		})
+	}
+
+	return c.JSON(resp)
+}
+
+func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var req models.UserRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	user, err := h.q.UpdateUser(c.Context(), repository.UpdateUserParams{
+		ID:   int64(id),
+		Name: req.Name,
+		Dob:  req.Dob,
+	})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(user)
+}
+
+func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.q.DeleteUser(c.Context(), int64(id)); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.SendStatus(204)
+}
