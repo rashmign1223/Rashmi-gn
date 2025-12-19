@@ -1,0 +1,49 @@
+Age Calculation
+internal/utils/age.go
+package utils
+
+import "time"
+
+func CalculateAge(dob time.Time) int {
+	now := time.Now()
+	age := now.Year() - dob.Year()
+
+	if now.YearDay() < dob.YearDay() {
+		age--
+	}
+	return age
+}
+
+User Model
+internal/models/user.go
+package models
+
+import "time"
+
+type UserRequest struct {
+	Name string    `json:"name" validate:"required"`
+	Dob  time.Time `json:"dob" validate:"required"`
+}
+
+type UserResponse struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+	Dob  string `json:"dob"`
+	Age  int    `json:"age"`
+
+Middleware
+internal/middleware/request_id.go
+package middleware
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+)
+
+func RequestID() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id := uuid.New().String()
+		c.Set("X-Request-ID", id)
+		return c.Next()
+	}
+}
