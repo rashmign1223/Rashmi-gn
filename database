@@ -1,0 +1,16 @@
+Database Migration:
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    dob DATE NOT NULL
+);
+SQLC Configuration:
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "queries/"
+    schema: "migrations/"
+    gen:
+      go:
+        package: "repository"
+        out: "../../internal/repository"
